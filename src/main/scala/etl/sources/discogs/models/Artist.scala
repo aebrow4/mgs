@@ -1,6 +1,7 @@
 package etl.sources.discogs.models
 
-import graph.models.ArtistOgm
+import graph.models
+import graph.models.Artist
 
 case class Artist(
     discogsId: String,
@@ -20,13 +21,16 @@ case class Artist(
     }
   }
 
-  def toOgm: ArtistOgm = {
-    println(dataQuality)
-    new ArtistOgm(
-      discogsId.toInt,
+  def toOgm: models.Artist = {
+    new models.Artist(
+      discogsId.toLong,
       name,
       dataQuality,
-      optToJava(realName)
+      optToJava(realName),
+      optToJava(None), // for now
+      optToJava(None),
+      optToJava(None),
+      optToJava(None)
     )
   }
 }

@@ -2,16 +2,19 @@ package etl.sources.discogs.parser
 
 import scala.xml._
 import etl.sources.discogs.models.Artist
-import graph.dataAccess.DataAccess.createArtist
-import graph.dataAccess.DataAccessOgm
+import graph.dataAccess.{ArtistDataAccess, Neo4jSessionFactory}
 
 /**
   * Load the contents of an XML file into the Neo4j db.
   * Assumes the file will be one of three types: Artists, Labels,
   * or Releases
+  *
   * @param xmlPath path of XML file to read
   */
-class DiscogsLoader(xmlPath: String) {
+class DiscogsParser(xmlPath: String) {
+  val artistDataAccess = new ArtistDataAccess({ () =>
+    Neo4jSessionFactory.getInstance().getNeo4jSession
+  })
   def load(fileType: String): Unit = {
     val document = parse
     getArtistsXml(document).foreach(loadArtist)
@@ -27,8 +30,7 @@ class DiscogsLoader(xmlPath: String) {
     */
   private def loadArtist(artistXml: Node): Unit = {
     val artist = serializeArtist(artistXml)
-    //createArtist(artist.toNeo4j)
-    DataAccessOgm.createArtist(artist.toOgm)
+    artistDataAccess.create(artist.toOgm)
   }
 
   /**
