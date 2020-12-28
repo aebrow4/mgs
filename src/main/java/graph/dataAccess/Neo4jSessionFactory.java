@@ -8,9 +8,11 @@ import org.neo4j.ogm.session.SessionFactory;
 
 public class Neo4jSessionFactory {
   private static String user = "neo4j";
-  private static String password = "E{6t&7Gm(W2TL{3";
+  private static String password = System.getenv("NEO4J_PASSWORD");
+  //private final static SessionFactory sessionFactory = new SessionFactory(
+  //    new BoltDriver(GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic(user, password))),
   private final static SessionFactory sessionFactory = new SessionFactory(
-      new BoltDriver(GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic(user, password))),
+      new BoltDriver(GraphDatabase.driver("bolt://138.68.251.199:7687", AuthTokens.basic(user, password))),
   false, "graph.models");
   private static Neo4jSessionFactory factory = new Neo4jSessionFactory();
 

@@ -1,104 +1,67 @@
 package etl.sources.discogs.parser
 
 import scala.xml._
-import etl.sources.discogs.models.Artist
-import graph.dataAccess.{ArtistDataAccess, Neo4jSessionFactory}
 
 /**
-  * Load the contents of an XML file into the Neo4j db.
-  * Assumes the file will be one of three types: Artists, Labels,
-  * or Releases
-  *
-  * @param xmlPath path of XML file to read
+  * Interface for parsing a discogs XML file and updating the neo4j db.
+  * The interface has two groups of functionality: one for interacting
+  * with the XML document, the other for interacting with neo4j.
+  * @param xmlPath Path to the XML file to read
+  * @tparam T Type of the corresponding discogs model for the file, e.g.
+  *           etl.sources.discogs.models.Artist
   */
-class DiscogsParser(xmlPath: String) {
-  val artistDataAccess = new ArtistDataAccess({ () =>
-    Neo4jSessionFactory.getInstance().getNeo4jSession
-  })
-  def load(fileType: String): Unit = {
-    val document = parse
-    getArtistsXml(document).foreach(loadArtist)
-  }
+abstract class DiscogsParser[T](xmlPath: String) {
 
-  private def parse: Elem = {
+  /*********************** Xml Api ***********************/
+  def document: Elem = {
     XML.load(xmlPath)
   }
+  // To minimize noise in the Db, records whose data quality is not
+  // in this allowlist are ignored by the parser
+  val acceptedDataQualities =
+    Seq("Correct", "Complete and Correct", "Needs Vote")
 
   /**
-    * Given an xml <artist> node, create an Artist in Neo4j
-    * @param artistXml [[scala.xml.Node]]
+    * Deserialize an XML representation of an entity into an instance
+    * of its discogs model T
+    * @param xmlNode
+    * @return
     */
-  private def loadArtist(artistXml: Node): Unit = {
-    val artist = serializeArtist(artistXml)
-    artistDataAccess.create(artist.toOgm)
-  }
+  def deserialize(xmlNode: Node): T
 
   /**
-    * Serialize an xml artist node to an instance of
-    * [[etl.sources.discogs.models.Artist]]
-    *
-    * @param artist xml node. Assumed to be <artist>
-    * @return [[etl.sources.discogs.models.Artist]]
+    * Select all XML nodes of tag @param elem
+    * @param elem The XML tag to select, e.g. artist, release, label
+    * @return
     */
-  private def serializeArtist(artist: Node): Artist = {
-    Artist(
-      discogsId = getId(artist),
-      name = escapeDoubleQuotes(getName(artist)),
-      dataQuality = getDataQuality(artist),
-      realName = getRealName(artist),
-      aliases = getAliases(artist),
-      members = getMembers(artist)
-    )
-  }
+  def getRecords(elem: Elem): NodeSeq
 
-  private def getId(elem: Node): String = elem.\("id").text
-  private def getName(elem: Node): String = elem.\("name").text
-  private def getDataQuality(elem: Node): String = elem.\("data_quality").text
-  private def getRealName(elem: Node): Option[String] = {
-    val realName = elem.\("realname").text
-    if (realName.nonEmpty) {
-      Some(realName)
-    } else {
-      None
-    }
-  }
+  // Selector implementations are provided for elements that are common to
+  // all three entities
+  protected def getId(elem: Node): String = elem.\("id").text
+  protected def getName(elem: Node): String = elem.\("name").text
+  protected def getDataQuality(elem: Node): String = elem.\("data_quality").text
 
-  /**
-    * Get the discogs Ids of any aliases for this artist
-    * @param elem  Artist node
-    * @return The Ids of the associated Artist records, if any
-    */
-  private def getAliases(elem: Node): Option[Seq[String]] = {
-    val artistIds = elem.\("aliases").\("name").toList.map { nameTag =>
-      nameTag.attribute("id").toString
-    }
-    if (artistIds.nonEmpty) {
-      Some(artistIds)
-    } else {
-      None
-    }
-  }
-
-  /**
-    * Get the discogs Ids of any members for this artist
-    * @param elem  Artist node
-    * @return The Ids of the associated Artist records, if any
-    */
-  private def getMembers(elem: Node): Option[Seq[String]] = {
-    val names = elem.\("members").\("name").map(_.text)
-    if (names.nonEmpty) {
-      Some(names)
-    } else {
-      None
-    }
-  }
-
-  private def getArtistsXml(elem: Elem): NodeSeq = elem.\("artist")
-  private def getReleasesXml(elem: Elem): NodeSeq = elem.\("release")
-  private def getLabelsXml(elem: Elem): NodeSeq = elem.\("label")
-
-  private def escapeDoubleQuotes(str: String): String = {
+  protected def escapeDoubleQuotes(str: String): String = {
     // "Danny" -> \"Danny\"
     str.replaceAll(""""""", """\\"""")
   }
+
+  /*********************** Neo4j Api ***********************/
+  val dataAccess: AnyRef // ideally type would be DataAccess
+  val BatchSize = 1000
+
+  /**
+    * Operation for creating batches of entity T in neo4j. Implementors
+    * should create records WITHOUT relationships/edges to other records,
+    * because the related records may not exist yet.
+    */
+  def batchCreate(): Unit
+
+  /**
+    * Operation for updating batches of entity T in neo4j. Implementors
+    * should only use batchUpdate to add relationships between entities.
+    * The implementor may assume that the records to relate exist.
+    */
+  def batchUpdate(): Unit
 }

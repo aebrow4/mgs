@@ -65,8 +65,8 @@ public class ArtistDataAccessTest extends Neo4jTest {
         Artist alias1 = ArtistFactory();
         Artist alias2 = ArtistFactory();
         Artist artist = ArtistFactory();
-        Artist.createBidirectionalAliasEdges(alias1, artist);
-        Artist.createBidirectionalAliasEdges(alias2, artist);
+        dataAccess.createBidirectionalAliasEdges(alias1, artist);
+        dataAccess.createBidirectionalAliasEdges(alias2, artist);
         Long alias1Id = alias1.getDiscogsId();
         Long alias2Id = alias2.getDiscogsId();
         Long artistId = artist.getDiscogsId();
@@ -79,7 +79,7 @@ public class ArtistDataAccessTest extends Neo4jTest {
 
         assertThat(alias1Result.getAliasOf().get().getDiscogsId()).isEqualTo(artistId);
         assertThat(alias2Result.getAliasOf().get().getDiscogsId()).isEqualTo(artistId);
-        Artist[] aliases = artistResult.getAliases().get().toArray(new Artist[0]);
+        Artist[] aliases = artistResult.getAliases().toArray(new Artist[0]);
         List<Long> aliasesDiscogsIds = Arrays.stream(aliases).map(a -> a.getDiscogsId()).collect(Collectors.toList());
         assertThat(aliasesDiscogsIds).contains(alias1Id);
         assertThat(aliasesDiscogsIds).contains(alias2Id);
@@ -90,8 +90,8 @@ public class ArtistDataAccessTest extends Neo4jTest {
         Artist member1 = ArtistFactory();
         Artist member2 = ArtistFactory();
         Artist group = ArtistFactory();
-        Artist.createBidirectionalMemberEdges(member1, group);
-        Artist.createBidirectionalMemberEdges(member2, group);
+        dataAccess.createBidirectionalMemberEdges(member1, group);
+        dataAccess.createBidirectionalMemberEdges(member2, group);
         Long member1Id = member1.getDiscogsId();
         Long member2Id = member2.getDiscogsId();
         Long groupId = group.getDiscogsId();
@@ -104,7 +104,7 @@ public class ArtistDataAccessTest extends Neo4jTest {
 
         assertThat(member1Result.getMemberOf().get().getDiscogsId()).isEqualTo(groupId);
         assertThat(member2Result.getMemberOf().get().getDiscogsId()).isEqualTo(groupId);
-        Artist[] members = groupResult.getMembers().get().toArray(new Artist[0]);
+        Artist[] members = groupResult.getMembers().toArray(new Artist[0]);
         List<Long> membersDiscogsIds = Arrays.stream(members).map(m -> m.getDiscogsId()).collect(Collectors.toList());
         assertThat(membersDiscogsIds).contains(member1Id);
         assertThat(membersDiscogsIds).contains(member2Id);

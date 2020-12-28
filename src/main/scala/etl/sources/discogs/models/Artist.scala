@@ -1,15 +1,14 @@
 package etl.sources.discogs.models
 
 import graph.models
-import graph.models.Artist
 
 case class Artist(
     discogsId: String,
     name: String,
     dataQuality: String,
     realName: Option[String],
-    aliases: Option[Seq[String]],
-    members: Option[Seq[String]]
+    aliases: Seq[String],
+    members: Seq[String]
 ) {
 
   // TODO move this somewhere else
@@ -27,9 +26,9 @@ case class Artist(
       name,
       dataQuality,
       optToJava(realName),
-      optToJava(None), // for now
+      new java.util.HashSet(),
       optToJava(None),
-      optToJava(None),
+      new java.util.HashSet(),
       optToJava(None)
     )
   }

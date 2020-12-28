@@ -1,5 +1,6 @@
 package graph.dataAccess;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Random;
 
@@ -14,9 +15,9 @@ public class Factories {
         "Artist" + discogsId,
         "Good",
         Optional.empty(),
+        new HashSet<>(),
         Optional.empty(),
-        Optional.empty(),
-        Optional.empty(),
+        new HashSet<>(),
         Optional.empty()
     );
   }

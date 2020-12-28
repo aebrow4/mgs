@@ -16,9 +16,9 @@ import scala.io.Source
 class XmlSplitter(inputPath: String, outputPath: String, fileType: String) {
 
   /** The number of lines to read from the input file for each output file */
-  val FileSize = 100
-  //val fileLength = getFileLength
-  val fileLength = 50
+  val FileSize = 100000
+  val fileLength = getFileLength
+  //val fileLength = 50
 
   /**
     * We maintain two line counters; one that tracks how many lines from the input we have

@@ -13,3 +13,5 @@ libraryDependencies += "org.neo4j" % "neo4j-ogm-core" % "3.2.18"
 libraryDependencies += "org.neo4j" % "neo4j-ogm-bolt-driver" % "3.2.18"
 libraryDependencies += "junit" % "junit" % "4.13.1"
 libraryDependencies += "org.assertj" % "assertj-core" % "2.4.1" % Test
+libraryDependencies += "org.scala-lang" % "scala-library" % "2.12.12"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % Test

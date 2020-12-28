@@ -29,14 +29,16 @@ public class Artist extends BaseNode {
   public Optional<String> getRealName() {
     return this.realName.isEmpty() ? Optional.empty() : Optional.of(this.realName);
   }
-  public Optional<Set<Artist>> getAliases() {
-    return this.aliases.isEmpty() ? Optional.empty() : Optional.of(this.aliases);
+  public Set<Artist> getAliases() {
+    return this.aliases == null ? new HashSet<>() : this.aliases;
   }
   public Optional<Artist> getAliasOf() {
     return this.aliasOf == null ? Optional.empty() : Optional.of(this.aliasOf);
   }
-  public Optional<Set<Artist>> getMembers() {
-    return this.members.isEmpty() ? Optional.empty() : Optional.of(this.members);
+  public Set<Artist> getMembers() {
+    // We should just initialize members as an emtpy set when not present
+    // rather than needing to do this check
+    return this.members == null ? new HashSet<>() : this.members;
   }
   public Optional<Artist> getMemberOf() {
     return this.memberOf == null ? Optional.empty() : Optional.of(this.memberOf);
@@ -46,8 +48,8 @@ public class Artist extends BaseNode {
     return this;
   }
 
-  public Artist addAlias(Artist alias) {
-    this.aliases.add(alias);
+  public Artist setAliases(Set<Artist> aliases) {
+    this.aliases = aliases;
     return this;
   }
   public Artist setAliasOf(Artist artist) {
@@ -55,36 +57,14 @@ public class Artist extends BaseNode {
     return this;
   }
 
-  /**
-   * Establish the HasAlias and IsAliasOf relationships between an artist and
-   * an alias.
-   * @param alias
-   * @param artist
-   */
-  public static void createBidirectionalAliasEdges(Artist alias, Artist artist) {
-    alias.setAliasOf(artist);
-    artist.addAlias(alias);
+  public void setMembers(Set<Artist> members) {
+    this.members = members;
   }
 
-  private Artist addMember(Artist member) {
-    this.members.add(member);
-    return this;
-  }
-  private Artist setGroup(Artist memberOf) {
-    this.memberOf = memberOf;
-    return this;
+  public void setMemberOf(Artist group) {
+    this.memberOf = group;
   }
 
-  /**
-   * Establish the HasMember and IsMemberOf relationships between a group member and
-   * a group.
-   * @param member
-   * @param group
-   */
-  public static void createBidirectionalMemberEdges(Artist member, Artist group) {
-    member.setGroup(group);
-    group.addMember(member);
-  }
 
   public static Class<Artist> getEntityType() {
     return Artist.class;
@@ -95,18 +75,18 @@ public class Artist extends BaseNode {
       String name,
       String dataQuality,
       Optional<String> realName,
-      Optional<Set<Artist>> aliases,
+      Set<Artist> aliases,
       Optional<Artist> aliasOf,
-      Optional<Set<Artist>> members,
+      Set<Artist> members,
       Optional<Artist> memberOf) {
     this.discogsId = discogsId;
     this.name = name;
     this.dataQuality = dataQuality;
     this.realName = realName.orElse("");
-    this.aliases = aliases.orElse(new HashSet<>());
+    this.aliases = aliases;
     this.aliasOf = aliasOf.orElse(null);
-    this.members = aliases.orElse(new HashSet<>());
-    this.memberOf = aliasOf.orElse(null);
+    this.members = members;
+    this.memberOf = memberOf.orElse(null);
   }
 
   // Unfortunately Neo4j needs a nullary constructor to use for reflection
