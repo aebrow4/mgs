@@ -36,11 +36,11 @@ object Main extends App {
   //releasesSplitter.split
   //val splitXmlPath = "/Users/andrewb/Desktop/discogs/a100.xml"
 
-  private def wipeArtistsFromDb: Unit = {
+  private def wipeArtistsFromDb(): Unit = {
     val artistDataAccess = new ArtistDataAccess({ () =>
       Neo4jSessionFactory.getInstance().getNeo4jSession
     })
-    artistDataAccess.deleteAll()
+    artistDataAccess.deleteAllInPages()
   }
 
   private def createArtistsFromDir(inputDir: String): Unit = {
@@ -55,5 +55,7 @@ object Main extends App {
       parser.batchUpdate()
     }
   }
-  updateArtistsFromDir(inputDir)
+  wipeArtistsFromDb()
+  //createArtistsFromDir(inputDir)
+  //updateArtistsFromDir(inputDir)
 }

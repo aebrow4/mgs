@@ -1,11 +1,15 @@
 package graph.dataAccess;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
 import org.neo4j.ogm.cypher.ComparisonOperator;
 import org.neo4j.ogm.cypher.Filter;
+import org.neo4j.ogm.cypher.query.Pagination;
+import org.neo4j.ogm.session.Session;
+
 
 abstract class DataAccess<T> {
 
@@ -13,6 +17,10 @@ abstract class DataAccess<T> {
   private static final int DEPTH_ENTITY = 1;
   protected GetSession getSession;
 
+
+  Object[] findAll(Pagination pagination) {
+    return getSession.get().loadAll(getEntityType(), pagination, DEPTH_LIST).toArray();
+  }
 
   Iterable<T> findAll(Filter filter) {
     return getSession.get().loadAll(getEntityType(), filter, DEPTH_LIST);
@@ -41,7 +49,7 @@ abstract class DataAccess<T> {
 
   /**
    * Lookup all records for the passed in ids. Returns an Iterator
-   * @param discogsId
+   * @param discogsIds
    * @return
    */
   Iterator<T> getByDiscogsId(Set<Long> discogsIds) {
@@ -75,8 +83,18 @@ abstract class DataAccess<T> {
     getSession.get().delete(find(id));
   }
 
-  public void deleteAll() {
-    getSession.get().delete(findAll());
+  public void deleteAllInPages() {
+    Pagination pagination = new Pagination(0, 10);
+    // we have to do the find and delete in the same session?
+    Session session = getSession.get();
+    Collection<T> records = session.loadAll(getEntityType(), pagination, DEPTH_LIST);
+    session.delete(records);
+
+    //Object thing = session.load(getEntityType(), 7032992L);
+    //Object thing2 = session.load(getEntityType(), 7032990L);
+    //Object array[] = { thing, thing2 };
+    // still deletes one by one..
+    //session.delete(array);
   }
 
   abstract Class<T> getEntityType();
