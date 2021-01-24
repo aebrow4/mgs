@@ -11,7 +11,7 @@ import org.neo4j.ogm.cypher.query.Pagination;
 import org.neo4j.ogm.session.Session;
 
 
-abstract class DataAccess<T> {
+abstract class Neo4jApi<T> {
 
   private static final int DEPTH_LIST = 0;
   private static final int DEPTH_ENTITY = 1;
@@ -23,6 +23,7 @@ abstract class DataAccess<T> {
   }
 
   Iterable<T> findAll(Filter filter) {
+    System.out.println("here");
     return getSession.get().loadAll(getEntityType(), filter, DEPTH_LIST);
   }
 
@@ -37,11 +38,12 @@ abstract class DataAccess<T> {
    * @return
    */
   Optional<T> getByDiscogsId(Long discogsId) {
-    Filter filter = new Filter("discogsId", ComparisonOperator.EQUALS, discogsId);
-    Iterator<T> res = findAll(filter).iterator();
+    //Filter filter = new Filter("discogsId", ComparisonOperator.EQUALS, discogsId);
+    T res = find(discogsId);
+    System.out.println("here 2");
 
-    if (res.hasNext()) {
-      return Optional.of(res.next());
+    if (res != null) {
+      return Optional.of(res);
     } else {
       return Optional.empty();
     }

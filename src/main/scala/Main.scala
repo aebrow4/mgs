@@ -55,7 +55,7 @@ object Main extends App {
       parser.batchUpdate()
     }
   }
-  wipeArtistsFromDb()
-  //createArtistsFromDir(inputDir)
+  //wipeArtistsFromDb()
+  createArtistsFromDir(inputDir)
   //updateArtistsFromDir(inputDir)
 }

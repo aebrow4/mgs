@@ -1,6 +1,9 @@
 package etl.sources.discogs.parser
 
+import scala.collection.mutable.ListBuffer
+import scala.io.BufferedSource
 import scala.xml._
+import utils.AutomaticResourceMgmt.using
 
 /**
   * Interface for parsing a discogs XML file and updating the neo4j db.
@@ -13,9 +16,20 @@ import scala.xml._
 abstract class DiscogsParser[T](xmlPath: String) {
 
   /*********************** Xml Api ***********************/
-  def document: Elem = {
+  lazy val document: Elem = {
     XML.load(xmlPath)
   }
+
+  lazy val fileLength: Int = getFileLength()
+
+  private def getFileLength(): Int = {
+    val file: BufferedSource = scala.io.Source.fromFile(xmlPath)
+
+    using[Int, BufferedSource](file) { file =>
+      file.getLines().size
+    }
+  }
+
   // To minimize noise in the Db, records whose data quality is not
   // in this allowlist are ignored by the parser
   val acceptedDataQualities =
@@ -48,7 +62,7 @@ abstract class DiscogsParser[T](xmlPath: String) {
   }
 
   /*********************** Neo4j Api ***********************/
-  val dataAccess: AnyRef // ideally type would be DataAccess
+  val dataAccessScala: AnyRef // ideally type would be DataAccess
   val BatchSize = 1000
 
   /**
@@ -64,4 +78,13 @@ abstract class DiscogsParser[T](xmlPath: String) {
     * The implementor may assume that the records to relate exist.
     */
   def batchUpdate(): Unit
+
+  protected def iteratorToIterable[T](iterator: Iterator[T]): Iterable[T] = {
+    var iterable = ListBuffer[T]()
+    while (iterator.hasNext) {
+      val item = iterator.next()
+      iterable += item
+    }
+    iterable
+  }
 }

@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import graph.models.Label;
 
-public class LabelDataAccess extends DataAccess<Label> {
+public class LabelNeo4jApi extends Neo4jApi<Label> {
   @Override
   Class<Label> getEntityType() {
     return Label.class;
@@ -13,7 +13,7 @@ public class LabelDataAccess extends DataAccess<Label> {
   @Override
   Optional<Label> getByDiscogsId(Long discogsId) { return super.getByDiscogsId(discogsId); }
 
-  public LabelDataAccess(GetSession getSession) {
+  public LabelNeo4jApi(GetSession getSession) {
     super.getSession = getSession;
   }
 }

@@ -11,8 +11,8 @@ import graph.models.Artist;
 
 import static graph.dataAccess.Factories.ArtistFactory;
 
-public class ArtistDataAccessTest extends Neo4jTest {
-    private final ArtistDataAccess dataAccess = new ArtistDataAccess(
+public class ArtistNeo4jApiTest extends Neo4jTest {
+    private final ArtistNeo4jApi neo4jApi = new ArtistNeo4jApi(
         () -> super.testSession
     );
 
@@ -21,9 +21,9 @@ public class ArtistDataAccessTest extends Neo4jTest {
         Artist artist = ArtistFactory();
         Long id = artist.getDiscogsId();
 
-        dataAccess.create(artist);
+        neo4jApi.create(artist);
 
-        Optional<Artist> result = dataAccess.getByDiscogsId(id);
+        Optional<Artist> result = neo4jApi.getByDiscogsId(id);
         assertThat(result.isPresent());
         assertThat(result.get().getDiscogsId()).isEqualTo(id);
     }
@@ -33,9 +33,10 @@ public class ArtistDataAccessTest extends Neo4jTest {
         Artist artist = ArtistFactory();
         Long id = artist.getDiscogsId();
 
-        dataAccess.create(artist);
+        neo4jApi.create(artist);
 
-        Optional<Artist> emptyResult = dataAccess.getByDiscogsId(id + 1);
+        System.out.println(1);
+        Optional<Artist> emptyResult = neo4jApi.getByDiscogsId(id + 1);
         assertThat(emptyResult.isEmpty());
     }
 
@@ -48,9 +49,9 @@ public class ArtistDataAccessTest extends Neo4jTest {
         String name = artist.getName();
         String dataQuality = artist.getDataQuality();
 
-        dataAccess.create(artist);
+        neo4jApi.create(artist);
 
-        Optional<Artist> result = dataAccess.getByDiscogsId(id);
+        Optional<Artist> result = neo4jApi.getByDiscogsId(id);
         assertThat(result.isPresent());
 
         Artist res = result.get();
@@ -65,17 +66,17 @@ public class ArtistDataAccessTest extends Neo4jTest {
         Artist alias1 = ArtistFactory();
         Artist alias2 = ArtistFactory();
         Artist artist = ArtistFactory();
-        dataAccess.createBidirectionalAliasEdges(alias1, artist);
-        dataAccess.createBidirectionalAliasEdges(alias2, artist);
+        neo4jApi.createBidirectionalAliasEdges(alias1, artist);
+        neo4jApi.createBidirectionalAliasEdges(alias2, artist);
         Long alias1Id = alias1.getDiscogsId();
         Long alias2Id = alias2.getDiscogsId();
         Long artistId = artist.getDiscogsId();
 
-        dataAccess.create(artist);
+        neo4jApi.create(artist);
 
-        Artist alias1Result = dataAccess.getByDiscogsId(alias1Id).get();
-        Artist alias2Result = dataAccess.getByDiscogsId(alias2Id).get();
-        Artist artistResult = dataAccess.getByDiscogsId(artistId).get();
+        Artist alias1Result = neo4jApi.getByDiscogsId(alias1Id).get();
+        Artist alias2Result = neo4jApi.getByDiscogsId(alias2Id).get();
+        Artist artistResult = neo4jApi.getByDiscogsId(artistId).get();
 
         assertThat(alias1Result.getAliasOf().get().getDiscogsId()).isEqualTo(artistId);
         assertThat(alias2Result.getAliasOf().get().getDiscogsId()).isEqualTo(artistId);
@@ -90,17 +91,17 @@ public class ArtistDataAccessTest extends Neo4jTest {
         Artist member1 = ArtistFactory();
         Artist member2 = ArtistFactory();
         Artist group = ArtistFactory();
-        dataAccess.createBidirectionalMemberEdges(member1, group);
-        dataAccess.createBidirectionalMemberEdges(member2, group);
+        neo4jApi.createBidirectionalMemberEdges(member1, group);
+        neo4jApi.createBidirectionalMemberEdges(member2, group);
         Long member1Id = member1.getDiscogsId();
         Long member2Id = member2.getDiscogsId();
         Long groupId = group.getDiscogsId();
 
-        dataAccess.create(group);
+        neo4jApi.create(group);
 
-        Artist member1Result = dataAccess.getByDiscogsId(member1Id).get();
-        Artist member2Result = dataAccess.getByDiscogsId(member2Id).get();
-        Artist groupResult = dataAccess.getByDiscogsId(groupId).get();
+        Artist member1Result = neo4jApi.getByDiscogsId(member1Id).get();
+        Artist member2Result = neo4jApi.getByDiscogsId(member2Id).get();
+        Artist groupResult = neo4jApi.getByDiscogsId(groupId).get();
 
         assertThat(member1Result.getMemberOf().get().getDiscogsId()).isEqualTo(groupId);
         assertThat(member2Result.getMemberOf().get().getDiscogsId()).isEqualTo(groupId);

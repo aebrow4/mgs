@@ -12,8 +12,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import static graph.dataAccess.Factories.LabelFactory;
 
-public class LabelDataAccessTest extends Neo4jTest {
-  private final LabelDataAccess dataAccess = new LabelDataAccess(
+public class LabelNeo4jApiTest extends Neo4jTest {
+  private final LabelNeo4jApi dataAccess = new LabelNeo4jApi(
       () -> super.testSession
     );
 

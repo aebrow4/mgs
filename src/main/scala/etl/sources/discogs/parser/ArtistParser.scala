@@ -2,12 +2,8 @@ package etl.sources.discogs.parser
 
 import etl.sources.discogs.models.Artist
 import graph.dataAccess.{ArtistDataAccess, Neo4jSessionFactory}
-import graph.models
 import scala.xml.{Elem, Node, NodeSeq}
-import utils.Converters.scalaToJavaSet
 import graph.Utils.buildResultMap
-import java.util
-import collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
 class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
@@ -65,7 +61,7 @@ class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
   }
 
   /*********************** Neo4j Api ***********************/
-  val dataAccess = new ArtistDataAccess({ () =>
+  val dataAccessScala = new ArtistDataAccess({ () =>
     Neo4jSessionFactory.getInstance().getNeo4jSession
   })
 
@@ -78,22 +74,28 @@ class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
       }
 
       if (batch.length >= BatchSize) {
-        dataAccess.create(batch.map(_.toOgm).asJava)
+        dataAccessScala.create(batch.map(_.toOgm))
         batch = new ListBuffer[Artist]()
       }
     }
   }
 
   /**
-    * Idempotently add the two relationships that an artist record may have to other
-    * artist records.
-    * A map of artist IDs to that artist's alias and member IDs is built iteratively.
-    * When the batch size is reached, all artist records for IDs in the map are fetched.
-    * The relationships are added between the models, the batch is committed, reset,
-    * and iteration continues.
+    * Given a discogs Artist xml file, process it in batches such that the artist-artist
+    * relationships (IsAlias/HasAlias, IsMember/HasMember) between all artists in the
+    * file are created. Assumes that all artists to be updated have already been created
+    * in neo4j.
+    * An artist may have lists of members and aliases. Build a mapping of ids:
+    * (artistID) -> (aliasIds, memberIds)
+    * and once the size of the mapping is equal to the batch size, fetch all the records
+    * from the db, relate them to one another, commit, and start over for the next batch.
+    * Updates are idempotent.
     */
   def batchUpdate(): Unit = {
-    var currentBatch = 0
+    // Our position in the file
+    var lineNumber = 0
+
+    // A collection of ids whose records will be updated in the batch.
     var artistIdsToSubArtistIds = collection.mutable
       .Map[Long, (Set[Long], Set[Long])]()
     for (node <- getRecords(document)) yield {
@@ -102,65 +104,50 @@ class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
         artistIdsToSubArtistIds + (artist.discogsId.toLong -> (artist.aliases
           .map(_.toLong)
           .toSet, artist.members.map(_.toLong).toSet))
-      currentBatch += 1
+      lineNumber += 1
 
-      // FIXME we also need to process the final group of records in each file, where currentBatch
-      // will be less than BatchSize
-      if (currentBatch == BatchSize) {
-        // get records needed for update
-        // artist records is a set we'll iterate over; the other two are maps of
-        // ids to records
-        val artistRecords: util.Iterator[models.Artist] =
-          dataAccess.getByDiscogsId(
-            scalaToJavaSet(artistIdsToSubArtistIds.keySet)
-          )
+      if (lineNumber % BatchSize == 0 || lineNumber == fileLength) {
         val aliasIds = artistIdsToSubArtistIds.valuesIterator.toList
-          .map(_._1)
-          .flatten
+          .flatMap(_._1)
           .toSet
         val memberIds = artistIdsToSubArtistIds.valuesIterator.toList
-          .map(_._2)
-          .flatten
+          .flatMap(_._2)
           .toSet
+
+        // Fetch records
+        val artistRecords =
+          dataAccessScala.getByDiscogsId(
+            artistIdsToSubArtistIds.keySet
+          )
         val aliasRecords =
           buildResultMap(
-            dataAccess.getByDiscogsId(scalaToJavaSet(aliasIds))
+            dataAccessScala.getByDiscogsId(aliasIds)
           )
         val memberRecords = {
           buildResultMap(
-            dataAccess.getByDiscogsId(scalaToJavaSet(memberIds))
+            dataAccessScala.getByDiscogsId(memberIds)
           )
         }
 
-        // establish the relationships
-        artistRecords.forEachRemaining { artist =>
+        // establish the relationships in memory
+        artistRecords.foreach { artist =>
           val id = artist.getDiscogsId
           val aliasIds = artistIdsToSubArtistIds.get(id).get._1
           aliasIds.foreach { aliasId =>
-            println(s"building edges for alias $aliasId")
             aliasRecords.get(aliasId).foreach { alias =>
-              dataAccess.createBidirectionalAliasEdges(alias, artist)
+              dataAccessScala.createBidirectionalAliasEdges(alias, artist)
             }
           }
           val memberIds = artistIdsToSubArtistIds.get(id).get._2
           memberIds.foreach { memberId =>
-            println(s"building edges for member $memberId")
             memberRecords.get(memberId).foreach { member =>
-              dataAccess.createBidirectionalMemberEdges(member, artist)
+              dataAccessScala.createBidirectionalMemberEdges(member, artist)
             }
           }
         }
-        // need to get artistRecords from set to iterator
-        var iterable =
-          scala.collection.mutable.ListBuffer[graph.models.Artist]()
-        while (artistRecords.hasNext) {
-          val artist = artistRecords.next()
-          iterable += artist
-        }
-
-        dataAccess.update(iterable.asJava)
-        currentBatch = 0
-        println("=================New Batch===================")
+        // update db and clear id map
+        dataAccessScala.update(iteratorToIterable(artistRecords))
+        artistIdsToSubArtistIds = artistIdsToSubArtistIds.empty
       }
     }
   }

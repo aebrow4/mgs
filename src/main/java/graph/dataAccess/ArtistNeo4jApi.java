@@ -1,21 +1,22 @@
 package graph.dataAccess;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import graph.models.Artist;
 
-public class ArtistDataAccess extends DataAccess<Artist> {
+public class ArtistNeo4jApi extends Neo4jApi<Artist> {
   @Override
   Class<Artist> getEntityType() {
     return Artist.class;
   }
 
   @Override
-  public Optional<Artist> getByDiscogsId(Long discogsId) { return super.getByDiscogsId(discogsId); }
+  public Optional<Artist> getByDiscogsId(Long discogsId) {
+    System.out.println(2);
+    return super.getByDiscogsId(discogsId);
+  }
 
   @Override
   public Iterator<Artist> getByDiscogsId(Set<Long> discogsIds) { return super.getByDiscogsId(discogsIds); }
@@ -33,7 +34,6 @@ public class ArtistDataAccess extends DataAccess<Artist> {
   /**
    * Establish directed HasAlias edge from artist to alias.
    * The edge is added to any existing alias edges/
-   * @param artist.aliases
    * @param artist
    * @param alias
    * @return
@@ -66,7 +66,6 @@ public class ArtistDataAccess extends DataAccess<Artist> {
 
   /**
    * Establish the HasMember edge from group to member
-   * @param group.members
    * @param group
    * @param member
    */
@@ -85,7 +84,7 @@ public class ArtistDataAccess extends DataAccess<Artist> {
     member.setMemberOf(group);
   }
 
-  public ArtistDataAccess(GetSession getSession) {
+  public ArtistNeo4jApi(GetSession getSession) {
     super.getSession = getSession;
   }
 }
