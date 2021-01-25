@@ -7,11 +7,11 @@ import org.neo4j.ogm.config.Configuration;
 import org.neo4j.ogm.session.Session;
 import org.neo4j.ogm.session.SessionFactory;
 
-abstract class Neo4jTest {
+public abstract class Neo4jTest {
   @Rule
   public Neo4jRule neoServer = new Neo4jRule();
 
-  protected Session testSession;
+  public Session testSession;
 
   @Before
   public void setUp() throws Exception {

@@ -1,5 +1,6 @@
 package etl.sources.discogs.parser
 
+import graph.dataAccess.Neo4jApi
 import scala.collection.mutable.ListBuffer
 import scala.io.BufferedSource
 import scala.xml._
@@ -62,7 +63,7 @@ abstract class DiscogsParser[T](xmlPath: String) {
   }
 
   /*********************** Neo4j Api ***********************/
-  val dataAccessScala: AnyRef // ideally type would be DataAccess
+  val dataAccess: AnyRef // ideally this would be Neo4jApi[T]
   val BatchSize = 1000
 
   /**

@@ -10,7 +10,7 @@ public class Neo4jSessionFactory {
   private static String user = "neo4j";
   private static String password = System.getenv("NEO4J_PASSWORD");
   private static String ipAddr = System.getenv("NEO4J_IP");
-  private static String uri = "bolt://" + ipAddr + ":787";
+  private static String uri = "bolt://" + ipAddr + ":7687";
   private final static SessionFactory sessionFactory = new SessionFactory(
       new BoltDriver(GraphDatabase.driver(uri, AuthTokens.basic(user, password))),
   false, "graph.models");

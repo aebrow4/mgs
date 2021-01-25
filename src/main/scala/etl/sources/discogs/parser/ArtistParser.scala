@@ -1,13 +1,14 @@
 package etl.sources.discogs.parser
 
 import etl.sources.discogs.models.Artist
-import graph.dataAccess.{ArtistDataAccess, Neo4jSessionFactory}
+import graph.dataAccess.ArtistDataAccess
 import graph.models
 import scala.xml.{Elem, Node, NodeSeq}
 import graph.utils.DbUtils.buildResultMap
 import scala.collection.mutable.ListBuffer
 
-class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
+class ArtistParser(xmlPath: String, val dataAccess: ArtistDataAccess)
+    extends DiscogsParser[Artist](xmlPath) {
 
   /*********************** Xml Api ***********************/
   /**
@@ -62,20 +63,23 @@ class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
   }
 
   /*********************** Neo4j Api ***********************/
-  val dataAccessScala = new ArtistDataAccess({ () =>
-    Neo4jSessionFactory.getInstance().getNeo4jSession
-  })
-
   def batchCreate(): Unit = {
+    // Our position in the file
+    var recordsRead = 0
+    val totalRecords = getRecords(document).size
+
     var batch = new ListBuffer[Artist]()
     for (node <- getRecords(document)) yield {
       val artist = deserialize(node)
       if (acceptedDataQualities.contains(artist.dataQuality)) {
         batch += artist
       }
+      recordsRead += 1
+      println(s"totalRecords $totalRecords, recordsRead $recordsRead")
 
-      if (batch.length >= BatchSize) {
-        dataAccessScala.create(batch.map(_.toOgm))
+      if (batch.size == BatchSize || recordsRead == totalRecords) {
+        dataAccess.create(batch.map(_.toOgm))
+        println(s"created $batch")
         batch = new ListBuffer[Artist]()
       }
     }
@@ -117,19 +121,19 @@ class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
 
         // Fetch records
         val artistRecords =
-          dataAccessScala.getByDiscogsId(
+          dataAccess.getByDiscogsId(
             artistIdsToSubArtistIds.keySet
           )
 
         val a: Iterator[models.Artist] =
-          dataAccessScala.getByDiscogsId(aliasIds)
+          dataAccess.getByDiscogsId(aliasIds)
         val aliasRecords =
           buildResultMap(
-            dataAccessScala.getByDiscogsId(aliasIds)
+            dataAccess.getByDiscogsId(aliasIds)
           )
         val memberRecords = {
           buildResultMap(
-            dataAccessScala.getByDiscogsId(memberIds)
+            dataAccess.getByDiscogsId(memberIds)
           )
         }
 
@@ -139,18 +143,18 @@ class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
           val aliasIds = artistIdsToSubArtistIds.get(id).get._1
           aliasIds.foreach { aliasId =>
             aliasRecords.get(aliasId).foreach { alias =>
-              dataAccessScala.createBidirectionalAliasEdges(alias, artist)
+              dataAccess.createBidirectionalAliasEdges(alias, artist)
             }
           }
           val memberIds = artistIdsToSubArtistIds.get(id).get._2
           memberIds.foreach { memberId =>
             memberRecords.get(memberId).foreach { member =>
-              dataAccessScala.createBidirectionalMemberEdges(member, artist)
+              dataAccess.createBidirectionalMemberEdges(member, artist)
             }
           }
         }
         // update db and clear id map
-        dataAccessScala.update(iteratorToIterable(artistRecords))
+        dataAccess.update(iteratorToIterable(artistRecords))
         artistIdsToSubArtistIds = artistIdsToSubArtistIds.empty
       }
     }

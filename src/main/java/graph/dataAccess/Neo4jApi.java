@@ -11,7 +11,7 @@ import org.neo4j.ogm.cypher.query.Pagination;
 import org.neo4j.ogm.session.Session;
 
 
-abstract class Neo4jApi<T> {
+public abstract class Neo4jApi<T> {
 
   private static final int DEPTH_LIST = 0;
   private static final int DEPTH_ENTITY = 1;
@@ -68,7 +68,11 @@ abstract class Neo4jApi<T> {
   }
 
   public void create(Iterable<T> entities) {
-    getSession.get().save(entities);
+    System.out.println("creating" + entities.toString());
+    Session session = getSession.get();
+    System.out.println("session" + session);
+    session.save(entities);
+    //getSession.get().save(entities);
   }
 
   public void update(T entity) {
