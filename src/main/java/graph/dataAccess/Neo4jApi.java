@@ -23,7 +23,6 @@ abstract class Neo4jApi<T> {
   }
 
   Iterable<T> findAll(Filter filter) {
-    System.out.println("here");
     return getSession.get().loadAll(getEntityType(), filter, DEPTH_LIST);
   }
 
@@ -40,7 +39,6 @@ abstract class Neo4jApi<T> {
   Optional<T> getByDiscogsId(Long discogsId) {
     //Filter filter = new Filter("discogsId", ComparisonOperator.EQUALS, discogsId);
     T res = find(discogsId);
-    System.out.println("here 2");
 
     if (res != null) {
       return Optional.of(res);

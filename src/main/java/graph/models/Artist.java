@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Property;
 import org.neo4j.ogm.annotation.Relationship;
@@ -18,9 +17,6 @@ public class Artist extends BaseNode {
 
   @Relationship(type="HasMember") private Set<Artist> members;
   @Relationship(type="IsMemberOf") private Artist memberOf;
-
-  @Id // Use discogsId as primary ID
-  private Long discogsId;
 
   @Property("name")
   private String name;

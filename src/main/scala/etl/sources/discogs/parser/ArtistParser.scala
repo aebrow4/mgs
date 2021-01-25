@@ -2,8 +2,9 @@ package etl.sources.discogs.parser
 
 import etl.sources.discogs.models.Artist
 import graph.dataAccess.{ArtistDataAccess, Neo4jSessionFactory}
+import graph.models
 import scala.xml.{Elem, Node, NodeSeq}
-import graph.Utils.buildResultMap
+import graph.utils.DbUtils.buildResultMap
 import scala.collection.mutable.ListBuffer
 
 class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
@@ -119,6 +120,9 @@ class ArtistParser(xmlPath: String) extends DiscogsParser[Artist](xmlPath) {
           dataAccessScala.getByDiscogsId(
             artistIdsToSubArtistIds.keySet
           )
+
+        val a: Iterator[models.Artist] =
+          dataAccessScala.getByDiscogsId(aliasIds)
         val aliasRecords =
           buildResultMap(
             dataAccessScala.getByDiscogsId(aliasIds)

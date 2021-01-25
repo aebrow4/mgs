@@ -9,14 +9,11 @@ import org.neo4j.ogm.session.SessionFactory;
 public class Neo4jSessionFactory {
   private static String user = "neo4j";
   private static String password = System.getenv("NEO4J_PASSWORD");
-  //private final static SessionFactory sessionFactory = new SessionFactory(
-  //    new BoltDriver(GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic(user, password))),
+  private static String ipAddr = System.getenv("NEO4J_IP");
+  private static String uri = "bolt://" + ipAddr + ":787";
   private final static SessionFactory sessionFactory = new SessionFactory(
-      new BoltDriver(GraphDatabase.driver("bolt://localhost:7687", AuthTokens.basic(user, password))),
-      false, "graph.models");
-  //private final static SessionFactory sessionFactory = new SessionFactory(
-  //    new BoltDriver(GraphDatabase.driver("bolt://128.99.0.27:7687", AuthTokens.basic(user, password))),
-  //false, "graph.models");
+      new BoltDriver(GraphDatabase.driver(uri, AuthTokens.basic(user, password))),
+  false, "graph.models");
   private static Neo4jSessionFactory factory = new Neo4jSessionFactory();
 
   public static Neo4jSessionFactory getInstance() {
@@ -24,8 +21,7 @@ public class Neo4jSessionFactory {
   }
 
   // prevent external instantiation
-  private Neo4jSessionFactory() {
-  }
+  private Neo4jSessionFactory() {}
 
   public Session getNeo4jSession() {
     return sessionFactory.openSession();

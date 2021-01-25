@@ -1,16 +1,12 @@
 package graph.models;
 
-import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Property;
 
 @NodeEntity
-abstract class BaseNode {
+public abstract class BaseNode {
   @Id
-  @GeneratedValue
-  public Long id;
-
   @Property("discogsId")
   public Long discogsId;
 

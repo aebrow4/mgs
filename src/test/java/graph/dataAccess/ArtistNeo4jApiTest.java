@@ -35,7 +35,6 @@ public class ArtistNeo4jApiTest extends Neo4jTest {
 
         neo4jApi.create(artist);
 
-        System.out.println(1);
         Optional<Artist> emptyResult = neo4jApi.getByDiscogsId(id + 1);
         assertThat(emptyResult.isEmpty());
     }

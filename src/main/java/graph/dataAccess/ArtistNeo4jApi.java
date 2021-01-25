@@ -14,7 +14,6 @@ public class ArtistNeo4jApi extends Neo4jApi<Artist> {
 
   @Override
   public Optional<Artist> getByDiscogsId(Long discogsId) {
-    System.out.println(2);
     return super.getByDiscogsId(discogsId);
   }
 

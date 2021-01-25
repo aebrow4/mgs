@@ -1,16 +1,18 @@
-package graph
+package graph.utils
 
-import graph.models.Artist
+import graph.models.BaseNode
 
-object Utils {
-  // why cant i do [T <: BaseNode] instead of hardcoding Artist?
+object DbUtils {
+
   /**
     * Convert an iterator of DB records into a map of (id -> record)
     * @param results The results iterator
     * @return Map of ids to records
     */
-  def buildResultMap(results: Iterator[Artist]): Map[Long, Artist] = {
-    val resultMap = Map[Long, Artist]()
+  def buildResultMap[T <: BaseNode](
+      results: Iterator[T]
+  ): Map[Long, T] = {
+    val resultMap = Map[Long, T]()
     while (results.hasNext) {
       val currArtist = results.next()
       resultMap.+((currArtist.discogsId, currArtist))
