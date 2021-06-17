@@ -1,41 +1,44 @@
 package graph.dataAccess
 
-import graph.models.Artist
-import utils.Converters.scalaToJavaSet
-import collection.JavaConverters._
+import graph.models.nodes.Artist
 
-/**
-  * Scala wrapper for graph.dataAccess.ArtistNeo4jApi.
-  * The java *Neo4jApi classes should only be referenced in the corresponding
-  * scala *DataAccess classes, to prevent java types from leaking into scala code.
-  *
-  * Converts scala arguments to java, and java return values to scala
-  * Ex:
-  * java.util.Iterator -> Iterator (and vice versa), or
-  * java.util.Set -> Set (and vice versa)
-  *
-  * One exception is that the neo4j-ogm model instances are always represented
-  * in java. Methods in the java class that accept or return such values
-  * (as opposed to collections of such values) are not overridden here and
-  * may be called directly from the superclass.
-  */
-class ArtistDataAccess(getSession: GetSession)
-    extends ArtistNeo4jApi(getSession) {
-  def getByDiscogsId(
-      discogsIds: scala.collection.Set[Long]
-  ): Iterator[Artist] = {
-    super
-      .getByDiscogsId(
-        scalaToJavaSet(discogsIds)
-      )
-      .asScala
+import scala.concurrent.Future
+import neotypes.Driver
+import neotypes.generic.auto._
+import neotypes.implicits.syntax.all._
+
+class ArtistDataAccess(driver: Driver[Future]) {
+  def getByDiscogsId(id: Long): Future[Option[Artist]] = {
+    val query =
+      c"MATCH (a: Artist) WHERE a.discogsId=$id RETURN a LIMIT 1"
+        .query[Option[Artist]]
+    println(s"query=$query")
+    query.single(driver)
   }
 
-  def create(iterable: Iterable[Artist]): Unit = {
-    super.create(iterable.asJava)
+  def getByDiscogsIds(ids: Set[Long]): Future[List[Artist]] = ???
+
+  /**
+    * Create a single artist, without any relationships
+    * @param artist
+    * @return
+    */
+  def create(artist: Artist): Future[Artist] = {
+    val query = c"CREATE (a: Artist { $artist }) RETURN a".query[Artist]
+    query.single(driver)
   }
 
-  def update(iterable: Iterable[Artist]): Unit = {
-    super.update(iterable.asJava)
-  }
+  /**
+    * One or both of two updates are possible: a change to the Artist itself,
+    * or a change to its relationships, i.e. aliases and members.
+    *  If a relationship is being added, we assume the related node already exists.
+    * @param artist The node being updated
+    * @param aliases Artist nodes that are aliases of this node
+    * @param members Artist nodes that are members of this node
+    */
+  def update(
+      artist: Artist,
+      aliases: Set[Artist],
+      members: Set[Artist]
+  ): Future[Unit] = ???
 }

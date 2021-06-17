@@ -1,6 +1,5 @@
 package etl.sources.discogs.parser
 
-import graph.dataAccess.Neo4jApi
 import scala.collection.mutable.ListBuffer
 import scala.io.BufferedSource
 import scala.xml._

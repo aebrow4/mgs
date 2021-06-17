@@ -1,13 +1,9 @@
 import etl.sources.discogs.parser.ArtistParser
-import graph.dataAccess.{ArtistDataAccess, DriverProvider, Neo4jSessionFactory}
-import neotypes.generic.auto._
+import graph.dataAccess.{ArtistDataAccess, Driver}
 import neotypes.implicits.syntax.all._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.io.File
-import org.neo4j.ogm.session.Session
 import scala.concurrent.duration._
-
 
 import scala.concurrent.Await
 
@@ -26,13 +22,22 @@ object Main extends App {
     "/Users/andrewb/Desktop/xml"
   val outputDir = "/Users/andrewb/Desktop/xml"
 
+  val driver = new Driver(
+    user = "neo4j",
+    password = sys.env("NEO4J_PASSWORD"),
+    ipAddr = sys.env("NEO4J_IP")
+  ).driver
+
   private def helloWorldNeottypes = {
-    val driver = DriverProvider.withDriver
-    val people = "MATCH (a: Artist) RETURN a.name LIMIT 10".query[(String)].list(driver)
+    val people =
+      "MATCH (a: Artist) RETURN a.name LIMIT 10".query[(String)].list(driver)
     val res = Await.result(people, 2.seconds)
     println(res)
   }
-  helloWorldNeottypes()
+  val artistApi = new ArtistDataAccess(driver)
+  //val res = Await.result(artistApi.getByDiscogsIds(Set(7057893)), 2.seconds)
+  val res = Await.result(artistApi.getByDiscogsId(7058109), 2.seconds)
+  println(res)
 
   //val artistsSplitter =
   //  new XmlSplitter(

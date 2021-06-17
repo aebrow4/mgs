@@ -1,6 +1,6 @@
 package etl.sources.discogs.models
 
-import graph.models
+import graph.models.nodes.{Artist => Neo4jArtist}
 
 case class Artist(
     discogsId: String,
@@ -11,25 +11,12 @@ case class Artist(
     members: Seq[String]
 ) {
 
-  // TODO move this somewhere else
-  def optToJava[T](option: Option[T]): java.util.Optional[T] = {
-    if (option.isDefined) {
-      java.util.Optional.of(option.get)
-    } else {
-      java.util.Optional.empty()
-    }
-  }
-
-  def toOgm: models.Artist = {
-    new models.Artist(
+  def toNeo4jModel: Neo4jArtist = {
+    Neo4jArtist(
       discogsId.toLong,
       name,
       dataQuality,
-      optToJava(realName),
-      new java.util.HashSet(),
-      optToJava(None),
-      new java.util.HashSet(),
-      optToJava(None)
+      realName
     )
   }
 }
