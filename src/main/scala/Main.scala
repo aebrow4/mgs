@@ -1,7 +1,15 @@
 import etl.sources.discogs.parser.ArtistParser
-import graph.dataAccess.{ArtistDataAccess, Neo4jSessionFactory}
+import graph.dataAccess.{ArtistDataAccess, DriverProvider, Neo4jSessionFactory}
+import neotypes.generic.auto._
+import neotypes.implicits.syntax.all._
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import java.io.File
 import org.neo4j.ogm.session.Session
+import scala.concurrent.duration._
+
+
+import scala.concurrent.Await
 
 object Main extends App {
   def getListOfFiles(dir: String): List[File] = {
@@ -12,11 +20,20 @@ object Main extends App {
       List[File]()
     }
   }
-  def sessionFactory(): Session =
-    Neo4jSessionFactory.getInstance().getNeo4jSession()
+  //def sessionFactory(): Session =
+  //  Neo4jSessionFactory.getInstance().getNeo4jSession()
   val inputDir =
     "/Users/andrewb/Desktop/xml"
   val outputDir = "/Users/andrewb/Desktop/xml"
+
+  private def helloWorldNeottypes = {
+    val driver = DriverProvider.withDriver
+    val people = "MATCH (a: Artist) RETURN a.name LIMIT 10".query[(String)].list(driver)
+    val res = Await.result(people, 2.seconds)
+    println(res)
+  }
+  helloWorldNeottypes()
+
   //val artistsSplitter =
   //  new XmlSplitter(
   //    s"$inputDir/discogs_20200101_artists.xml",
@@ -36,22 +53,23 @@ object Main extends App {
   //releasesSplitter.split
   //val splitXmlPath = "/Users/andrewb/Desktop/discogs/a100.xml"
 
-  val artistDataAccess = new ArtistDataAccess({ () =>
-    Neo4jSessionFactory.getInstance().getNeo4jSession
-  })
+  // java driver stuff
+  //val artistDataAccess = new ArtistDataAccess({ () =>
+  //  Neo4jSessionFactory.getInstance().getNeo4jSession
+  //})
 
-  private def createArtistsFromDir(inputDir: String): Unit = {
-    for (f <- getListOfFiles(inputDir)) yield {
-      val parser = new ArtistParser(f.getPath, artistDataAccess)
-      parser.batchCreate()
-    }
-  }
-  private def updateArtistsFromDir(inputDir: String): Unit = {
-    for (f <- getListOfFiles(inputDir)) yield {
-      val parser = new ArtistParser(f.getPath, artistDataAccess)
-      parser.batchUpdate()
-    }
-  }
-  createArtistsFromDir(inputDir)
+  //private def createArtistsFromDir(inputDir: String): Unit = {
+  //  for (f <- getListOfFiles(inputDir)) yield {
+  //    val parser = new ArtistParser(f.getPath, artistDataAccess)
+  //    parser.batchCreate()
+  //  }
+  //}
+  //private def updateArtistsFromDir(inputDir: String): Unit = {
+  //  for (f <- getListOfFiles(inputDir)) yield {
+  //    val parser = new ArtistParser(f.getPath, artistDataAccess)
+  //    parser.batchUpdate()
+  //  }
+  //}
+  //createArtistsFromDir(inputDir)
   //updateArtistsFromDir(inputDir)
 }
