@@ -10,9 +10,12 @@ import graph.models.nodes.Artist
   * Parses discogs XML files and loads records in batches
   * into the neo4j db.
   */
-class Loader(artistParser: ArtistParser, artistDataAccess: ArtistDataAccess) {
+class Loader(
+    artistParser: ArtistParser,
+    artistDataAccess: ArtistDataAccess,
+    batchSize: Int
+) {
   private val artistXml = artistParser.document
-  private val BatchSize = 1000
   def batchCreate(): Unit = {
     // Our position in the file
     var recordsRead = 0
@@ -27,7 +30,7 @@ class Loader(artistParser: ArtistParser, artistDataAccess: ArtistDataAccess) {
       recordsRead += 1
       println(s"totalRecords $totalRecords, recordsRead $recordsRead")
 
-      if (batch.size == BatchSize || recordsRead == totalRecords) {
+      if (batch.size == batchSize || recordsRead == totalRecords) {
         artistDataAccess.create(batch.toSet)
         println(s"created $batch")
         batch = ListBuffer[Artist]()

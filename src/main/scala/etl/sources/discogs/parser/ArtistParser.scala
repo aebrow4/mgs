@@ -1,10 +1,9 @@
 package etl.sources.discogs.parser
 
-import etl.sources.discogs.models.{Artist => DiscogsArtist}
-import graph.dataAccess.ArtistDataAccess
 import scala.xml.{Elem, Node, NodeSeq}
+import etl.sources.discogs.models.{Artist => DiscogsArtist}
 
-class ArtistParser(xmlPath: String, val dataAccess: ArtistDataAccess)
+class ArtistParser(xmlPath: String)
     extends DiscogsParser[DiscogsArtist](xmlPath) {
 
   /*********************** Xml Api ***********************/

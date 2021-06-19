@@ -1,4 +1,4 @@
-package etl.sources.discogs.scripts
+package etl.sources.discogs
 
 import java.io.FileWriter
 import scala.io.Source

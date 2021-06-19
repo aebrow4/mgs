@@ -1,5 +1,6 @@
 package graph.dataAccess
 
+import config.MgsTest
 import graph.dataAccess.Fixtures.{
   DefaultArtist,
   DefaultArtist2,
@@ -9,10 +10,8 @@ import graph.dataAccess.Fixtures.{
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.BeforeAndAfterEach
 
-class ArtistDataAccessTest extends AnyFunSpec with BeforeAndAfterEach {
+class ArtistDataAccessTest extends MgsTest {
   val testDriverProvider = new LocalTestDriver()
   val testDriver = testDriverProvider.driver
   val artistDataAccess = new ArtistDataAccess(testDriver)
