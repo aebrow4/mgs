@@ -19,18 +19,16 @@ class ArtistParser(xmlPath: String, val dataAccess: ArtistDataAccess)
     * @param artist xml node. Assumed to be <artist>
     * @return [[etl.sources.discogs.models.Artist]]
     */
-  def deserialize(artist: Node): DiscogsArtist =
-    DiscogsArtist("123", "bob", "ok", None, Seq(), Seq())
-  //def deserialize(artist: Node): DiscogsArtist = {
-  //  DiscogsArtist(
-  //    discogsId = getId(artist),
-  //    name = escapeDoubleQuotes(getName(artist)),
-  //    dataQuality = getDataQuality(artist),
-  //    realName = getRealName(artist),
-  //    aliases = getAliases(artist),
-  //    members = getMembers(artist)
-  //  )
-  //}
+  def deserialize(artist: Node): DiscogsArtist = {
+    DiscogsArtist(
+      discogsId = getId(artist),
+      name = escapeDoubleQuotes(getName(artist)),
+      dataQuality = getDataQuality(artist),
+      realName = getRealName(artist),
+      aliases = getAliases(artist),
+      members = getMembers(artist)
+    )
+  }
 
   def getRecords(elem: Elem): NodeSeq = elem.\("artist")
 
@@ -68,24 +66,24 @@ class ArtistParser(xmlPath: String, val dataAccess: ArtistDataAccess)
   /*********************** Neo4j Api ***********************/
   def batchCreate(): Unit = {
     // Our position in the file
-    //var recordsRead = 0
-    //val totalRecords = getRecords(document).size
+    var recordsRead = 0
+    val totalRecords = getRecords(document).size
 
-    //var batch = new ListBuffer[Artist]()
-    //for (node <- getRecords(document)) yield {
-    //  val artist = deserialize(node)
-    //  if (acceptedDataQualities.contains(artist.dataQuality)) {
-    //    batch += artist
-    //  }
-    //  recordsRead += 1
-    //  println(s"totalRecords $totalRecords, recordsRead $recordsRead")
+    var batch = new ListBuffer[Artist]()
+    for (node <- getRecords(document)) yield {
+      val artist = deserialize(node)
+      if (acceptedDataQualities.contains(artist.dataQuality)) {
+        batch += artist.toNeo4jModel
+      }
+      recordsRead += 1
+      println(s"totalRecords $totalRecords, recordsRead $recordsRead")
 
-    //  if (batch.size == BatchSize || recordsRead == totalRecords) {
-    //    dataAccess.create(batch.map(_.toOgm))
-    //    println(s"created $batch")
-    //    batch = new ListBuffer[Artist]()
-    //  }
-    //}
+      if (batch.size == BatchSize || recordsRead == totalRecords) {
+        dataAccess.create(batch.toSet)
+        println(s"created $batch")
+        batch = new ListBuffer[Artist]()
+      }
+    }
   }
 
   /**

@@ -1,11 +1,17 @@
 package graph.dataAccess
 
-import graph.models.nodes.Artist
+import graph.dataAccess.Fixtures.{
+  DefaultArtist,
+  DefaultArtist2,
+  DefaultArtistId,
+  DefaultArtistId2
+}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.BeforeAndAfterEach
+import graph.models.nodes.Artist
 
 class ArtistDataAccessTest extends AnyFunSpec with BeforeAndAfterEach {
   val testDriverProvider = new LocalTestDriver()
@@ -15,51 +21,97 @@ class ArtistDataAccessTest extends AnyFunSpec with BeforeAndAfterEach {
   override def beforeEach(): Unit = testDriverProvider.clearDb()
 
   describe("createArtists") {
-    it("creates") {
-      val simpleArtist = Artist(
-        discogsId = 123,
-        name = "Bill",
-        dataQuality = "legit",
-        realName = Some("william")
-      )
+    it("creates single") {
+      Await.result(artistDataAccess.create(DefaultArtist), 2.seconds)
 
       val result =
-        Await.result(artistDataAccess.create(simpleArtist), 2.seconds)
+        Await.result(
+          artistDataAccess.getByDiscogsId(DefaultArtistId),
+          2.seconds
+        )
+      val record = result.get(DefaultArtistId)
+      assert(record.isDefined)
+      record.foreach { r =>
+        assert(r.discogsId == DefaultArtistId)
+        assert(r.name == "Bill")
+        assert(r.dataQuality == "legit")
+        assert(r.realName.contains("william"))
+      }
+    }
 
-      assert(result.discogsId == 123)
-      assert(result.name == "Bill")
-      assert(result.dataQuality == "legit")
-      assert(result.realName.contains("william"))
+    it("creates multiple") {
+      Await.result(
+        artistDataAccess.create(Set(DefaultArtist, DefaultArtist2)),
+        2.seconds
+      )
 
+      val resultA =
+        Await.result(
+          artistDataAccess.getByDiscogsId(DefaultArtistId),
+          2.seconds
+        )
+      val resultB =
+        Await.result(
+          artistDataAccess.getByDiscogsId(DefaultArtistId2),
+          2.seconds
+        )
+
+      val recordA = resultA.get(DefaultArtistId)
+      val recordB = resultB.get(DefaultArtistId2)
+      assert(recordA.isDefined)
+      recordA.map { r =>
+        assert(r.discogsId == DefaultArtistId)
+        assert(r.name == "Bill")
+        assert(r.dataQuality == "legit")
+        assert(r.realName.contains("william"))
+      }
+      assert(recordB.isDefined)
+      recordB.map { r =>
+        assert(r.discogsId == DefaultArtistId2)
+        assert(r.name == "julio")
+        assert(r.dataQuality == "good")
+        assert(r.realName.contains("jim"))
+      }
     }
   }
 
   describe("getArtistByDiscogsId") {
-    it("returns record when it exists") {
-      val simpleArtist = Artist(
-        discogsId = 123,
-        name = "Bill",
-        dataQuality = "legit",
-        realName = Some("william")
+    it("gets records") {
+      Await.result(
+        artistDataAccess.create(Set(DefaultArtist, DefaultArtist2)),
+        2.seconds
       )
 
-      Await.result(artistDataAccess.create(simpleArtist), 2.seconds)
+      val result = Await.result(
+        artistDataAccess.getByDiscogsId(Set(DefaultArtistId, DefaultArtistId2)),
+        2.seconds
+      )
 
-      val result = Await.result(artistDataAccess.getByDiscogsId(123), 2.seconds)
-
-      assert(result.isDefined)
-      result.foreach { result =>
-        assert(result.discogsId == 123)
-        assert(result.name == "Bill")
-        assert(result.dataQuality == "legit")
-        assert(result.realName.contains("william"))
+      val recordA = result.get(DefaultArtistId)
+      assert(recordA.isDefined)
+      recordA.map { r =>
+        assert(r.discogsId == DefaultArtistId)
+        assert(r.name == "Bill")
+        assert(r.dataQuality == "legit")
+        assert(r.realName.contains("william"))
+      }
+      val recordB = result.get(DefaultArtistId2)
+      assert(recordB.isDefined)
+      recordB.foreach { r =>
+        assert(r.discogsId == DefaultArtistId2)
+        assert(r.name == "julio")
+        assert(r.dataQuality == "good")
+        assert(r.realName.contains("jim"))
       }
     }
 
     it("returns none if no record is found") {
-      val result = Await.result(artistDataAccess.getByDiscogsId(555), 2.seconds)
+      val result = Await.result(
+        artistDataAccess.getByDiscogsId(45),
+        2.seconds
+      )
 
-      assert(result.isEmpty)
+      assert(!result.contains(45))
     }
   }
 }
