@@ -4,7 +4,7 @@ import graph.dataAccess.{ArtistDataAccess, LocalTestDriver}
 import org.scalatest.funspec.AnyFunSpec
 
 import scala.xml.Node
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterEach, FunSpec, FunSpecLike}
+import org.scalatest.BeforeAndAfterEach
 
 class ArtistParserTest extends AnyFunSpec with BeforeAndAfterEach {
   private val projectDirectory = System.getProperty("user.dir")

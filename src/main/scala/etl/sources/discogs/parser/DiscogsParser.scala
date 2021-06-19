@@ -61,24 +61,6 @@ abstract class DiscogsParser[T](xmlPath: String) {
     str.replaceAll(""""""", """\\"""")
   }
 
-  /*********************** Neo4j Api ***********************/
-  val dataAccess: AnyRef // ideally this would be Neo4jApi[T]
-  val BatchSize = 1000
-
-  /**
-    * Operation for creating batches of entity T in neo4j. Implementors
-    * should create records WITHOUT relationships/edges to other records,
-    * because the related records may not exist yet.
-    */
-  def batchCreate(): Unit
-
-  /**
-    * Operation for updating batches of entity T in neo4j. Implementors
-    * should only use batchUpdate to add relationships between entities.
-    * The implementor may assume that the records to relate exist.
-    */
-  def batchUpdate(): Unit
-
   protected def iteratorToIterable[T](iterator: Iterator[T]): Iterable[T] = {
     var iterable = ListBuffer[T]()
     while (iterator.hasNext) {

@@ -11,7 +11,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.BeforeAndAfterEach
-import graph.models.nodes.Artist
 
 class ArtistDataAccessTest extends AnyFunSpec with BeforeAndAfterEach {
   val testDriverProvider = new LocalTestDriver()

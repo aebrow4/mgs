@@ -2,11 +2,7 @@ package etl.sources.discogs.parser
 
 import etl.sources.discogs.models.{Artist => DiscogsArtist}
 import graph.dataAccess.ArtistDataAccess
-import graph.models.nodes.Artist
-
 import scala.xml.{Elem, Node, NodeSeq}
-
-import scala.collection.mutable.ListBuffer
 
 class ArtistParser(xmlPath: String, val dataAccess: ArtistDataAccess)
     extends DiscogsParser[DiscogsArtist](xmlPath) {
@@ -61,103 +57,5 @@ class ArtistParser(xmlPath: String, val dataAccess: ArtistDataAccess)
     artistNode.\("members").\("name").map { node =>
       node.attribute("id").map(_.text).getOrElse("")
     }
-  }
-
-  /*********************** Neo4j Api ***********************/
-  def batchCreate(): Unit = {
-    // Our position in the file
-    var recordsRead = 0
-    val totalRecords = getRecords(document).size
-
-    var batch = new ListBuffer[Artist]()
-    for (node <- getRecords(document)) yield {
-      val artist = deserialize(node)
-      if (acceptedDataQualities.contains(artist.dataQuality)) {
-        batch += artist.toNeo4jModel
-      }
-      recordsRead += 1
-      println(s"totalRecords $totalRecords, recordsRead $recordsRead")
-
-      if (batch.size == BatchSize || recordsRead == totalRecords) {
-        dataAccess.create(batch.toSet)
-        println(s"created $batch")
-        batch = new ListBuffer[Artist]()
-      }
-    }
-  }
-
-  /**
-    * Given a discogs Artist xml file, process it in batches such that the artist-artist
-    * relationships (IsAlias/HasAlias, IsMember/HasMember) between all artists in the
-    * file are created. Assumes that all artists to be updated have already been created
-    * in neo4j.
-    * An artist may have lists of members and aliases. Build a mapping of ids:
-    * (artistID) -> (aliasIds, memberIds)
-    * and once the size of the mapping is equal to the batch size, fetch all the records
-    * from the db, relate them to one another, commit, and start over for the next batch.
-    * Updates are idempotent.
-    */
-  def batchUpdate(): Unit = {
-    // Our position in the file
-    //var lineNumber = 0
-
-    //// A collection of ids whose records will be updated in the batch.
-    //var artistIdsToSubArtistIds = collection.mutable
-    //  .Map[Long, (Set[Long], Set[Long])]()
-    //for (node <- getRecords(document)) yield {
-    //  val artist = deserialize(node)
-    //  artistIdsToSubArtistIds =
-    //    artistIdsToSubArtistIds + (artist.discogsId.toLong -> (artist.aliases
-    //      .map(_.toLong)
-    //      .toSet, artist.members.map(_.toLong).toSet))
-    //  lineNumber += 1
-
-    //  if (lineNumber % BatchSize == 0 || lineNumber == fileLength) {
-    //    val aliasIds = artistIdsToSubArtistIds.valuesIterator.toList
-    //      .flatMap(_._1)
-    //      .toSet
-    //    val memberIds = artistIdsToSubArtistIds.valuesIterator.toList
-    //      .flatMap(_._2)
-    //      .toSet
-
-    //    // Fetch records
-    //    val artistRecords =
-    //      dataAccess.getByDiscogsId(
-    //        artistIdsToSubArtistIds.keySet
-    //      )
-
-    //    val a: Iterator[ArtistDep] =
-    //      dataAccess.getByDiscogsId(aliasIds)
-    //    val aliasRecords =
-    //      buildResultMap(
-    //        dataAccess.getByDiscogsId(aliasIds)
-    //      )
-    //    val memberRecords = {
-    //      buildResultMap(
-    //        dataAccess.getByDiscogsId(memberIds)
-    //      )
-    //    }
-
-    //    // establish the relationships in memory
-    //    artistRecords.foreach { artist =>
-    //      val id = artist.getDiscogsId
-    //      val aliasIds = artistIdsToSubArtistIds.get(id).get._1
-    //      aliasIds.foreach { aliasId =>
-    //        aliasRecords.get(aliasId).foreach { alias =>
-    //          dataAccess.createBidirectionalAliasEdges(alias, artist)
-    //        }
-    //      }
-    //      val memberIds = artistIdsToSubArtistIds.get(id).get._2
-    //      memberIds.foreach { memberId =>
-    //        memberRecords.get(memberId).foreach { member =>
-    //          dataAccess.createBidirectionalMemberEdges(member, artist)
-    //        }
-    //      }
-    //    }
-    //    // update db and clear id map
-    //    dataAccess.update(iteratorToIterable(artistRecords))
-    //    artistIdsToSubArtistIds = artistIdsToSubArtistIds.empty
-    //  }
-    //}
   }
 }
