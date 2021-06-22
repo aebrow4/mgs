@@ -5,7 +5,12 @@ import neotypes.Driver
 import neotypes.generic.auto._
 import neotypes.implicits.syntax.all._
 import graph.models.nodes.Artist
-import graph.CqlUtils.mkCql
+import graph.CypherUtils.{joinCypher, propertyCriteria}
+import graph.queries.ArtistQueries.{
+  getArtistIdentifier,
+  matchArtistsQueryFragment,
+  matchArtistsQueryFragment
+}
 
 class ArtistDataAccess(driver: Driver[Future]) {
 
@@ -22,7 +27,7 @@ class ArtistDataAccess(driver: Driver[Future]) {
     * for the records that are found
     */
   def getByDiscogsId(ids: Set[Long]): Future[Map[Long, Artist]] = {
-    val artistsCql = mkCql(ids.map { id =>
+    val artistsCql = joinCypher(ids.map { id =>
       c"$id"
     }.toSeq)
     val query = c"MATCH (a: Artist) WHERE [$artistsCql] RETURN a.discogsId, a"
@@ -46,15 +51,16 @@ class ArtistDataAccess(driver: Driver[Future]) {
     *    (bar: Artist { discogsId: $p3 ...}), ...
     */
   def create(artists: Set[Artist]): Future[Unit] = {
-    val artistCql = artists
+    val artistCypherFragments = artists
       .map { artist =>
-        val identifier = artist.name
-        c"(" + identifier + c": Artist { $artist })"
+        val id = artist.discogsId
+        val identifier = s"a$id"
+        c"" + s"($identifier: Artist " + c"{ $artist })"
       }
 
-    val cql = mkCql(artistCql.toSeq)
+    val queryBuilder = joinCypher(artistCypherFragments.toSeq)
 
-    val query = c"CREATE $cql".query[Unit]
+    val query = c"CREATE $queryBuilder".query[Unit]
     query.execute(driver)
   }
 
@@ -70,5 +76,33 @@ class ArtistDataAccess(driver: Driver[Future]) {
       artist: Artist,
       aliases: Set[Artist],
       members: Set[Artist]
-  ): Future[Unit] = ???
+  ): Future[Unit] = {
+    createAliasRelationship(artist, aliases)
+  }
+
+  private def createAliasRelationship(artist: Artist, aliases: Set[Artist]) = {
+    val artistMatchQueryBuilder = matchArtistsQueryFragment(artist.discogsId)
+
+    // (a100: Artist {discogsId: 100})
+    val aliasMatchQueryBuilder = matchArtistsQueryFragment(
+      aliases.map(_.discogsId)
+    )
+
+    // i.e. (nicoleMoudaber)-[r:HasAlias]->(hairLady)
+    val hasAliasQueryBuilder = joinCypher(aliases.map { alias =>
+      c"" + s"(${getArtistIdentifier(artist.discogsId)})-[r${artist.discogsId}${alias.discogsId}:HasAlias]->(a${alias.discogsId})"
+    }.toSeq)
+
+    // i.e. (hairLady)-[r:IsAlias]->(nicoleMoudaber)
+    val isAliasQueryBuilder = joinCypher(aliases.map { alias =>
+      c"" + s"(${getArtistIdentifier(alias.discogsId)}-[r${alias.discogsId}${artist.discogsId}:IsAlias]->(a${artist.discogsId})"
+    }.toSeq)
+
+    val queryBuilder =
+      c"MATCH $artistMatchQueryBuilder, $aliasMatchQueryBuilder MERGE $hasAliasQueryBuilder MERGE $isAliasQueryBuilder"
+
+    val query = queryBuilder.query[Unit]
+    println(query)
+    query.execute(driver)
+  }
 }

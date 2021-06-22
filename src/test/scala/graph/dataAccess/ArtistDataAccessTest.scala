@@ -4,8 +4,16 @@ import config.MgsTest
 import graph.dataAccess.Fixtures.{
   DefaultArtist,
   DefaultArtist2,
+  DefaultArtist2DataQuality,
+  DefaultArtist2Name,
+  DefaultArtist2RealName,
+  DefaultArtistDataQuality,
   DefaultArtistId,
-  DefaultArtistId2
+  DefaultArtistId2,
+  DefaultArtistName,
+  DefaultArtistRealName,
+  HairLady,
+  Nicole
 }
 
 import scala.concurrent.Await
@@ -31,9 +39,9 @@ class ArtistDataAccessTest extends MgsTest {
       assert(record.isDefined)
       record.foreach { r =>
         assert(r.discogsId == DefaultArtistId)
-        assert(r.name == "Bill")
-        assert(r.dataQuality == "legit")
-        assert(r.realName.contains("william"))
+        assert(r.name == DefaultArtistName)
+        assert(r.dataQuality == DefaultArtistDataQuality)
+        assert(r.realName == DefaultArtistRealName)
       }
     }
 
@@ -59,16 +67,16 @@ class ArtistDataAccessTest extends MgsTest {
       assert(recordA.isDefined)
       recordA.map { r =>
         assert(r.discogsId == DefaultArtistId)
-        assert(r.name == "Bill")
-        assert(r.dataQuality == "legit")
-        assert(r.realName.contains("william"))
+        assert(r.name == DefaultArtistName)
+        assert(r.dataQuality == DefaultArtistDataQuality)
+        assert(r.realName == DefaultArtistRealName)
       }
       assert(recordB.isDefined)
       recordB.map { r =>
         assert(r.discogsId == DefaultArtistId2)
-        assert(r.name == "julio")
-        assert(r.dataQuality == "good")
-        assert(r.realName.contains("jim"))
+        assert(r.name == DefaultArtist2Name)
+        assert(r.dataQuality == DefaultArtist2DataQuality)
+        assert(r.realName == DefaultArtist2RealName)
       }
     }
   }
@@ -89,17 +97,17 @@ class ArtistDataAccessTest extends MgsTest {
       assert(recordA.isDefined)
       recordA.map { r =>
         assert(r.discogsId == DefaultArtistId)
-        assert(r.name == "Bill")
-        assert(r.dataQuality == "legit")
-        assert(r.realName.contains("william"))
+        assert(r.name == DefaultArtistName)
+        assert(r.dataQuality == DefaultArtistDataQuality)
+        assert(r.realName == DefaultArtistRealName)
       }
       val recordB = result.get(DefaultArtistId2)
       assert(recordB.isDefined)
       recordB.foreach { r =>
         assert(r.discogsId == DefaultArtistId2)
-        assert(r.name == "julio")
-        assert(r.dataQuality == "good")
-        assert(r.realName.contains("jim"))
+        assert(r.name == DefaultArtist2Name)
+        assert(r.dataQuality == DefaultArtist2DataQuality)
+        assert(r.realName == DefaultArtist2RealName)
       }
     }
 
@@ -111,5 +119,31 @@ class ArtistDataAccessTest extends MgsTest {
 
       assert(!result.contains(45))
     }
+  }
+
+  describe("update") {
+    //it("creates alias relationships") {
+    //  Await.result(
+    //    artistDataAccess.create(Set(Nicole, HairLady)),
+    //    2.seconds
+    //  )
+
+    //  // Make HairLady an alias of Nicole, bidirectionally
+    //  Await.result(
+    //    artistDataAccess.update(Nicole, Set(HairLady), Set()),
+    //    2.seconds
+    //  )
+
+    //  val results = Await.result(
+    //    artistDataAccess.getByDiscogsId(Set(DefaultArtistId, DefaultArtistId2)),
+    //    2.seconds
+    //  )
+    //  val nicole = results.get(DefaultArtistId)
+
+    //  assert(nicole.isDefined)
+    //  nicole.map { nicole =>
+    //    nic
+    //  }
+    //}
   }
 }

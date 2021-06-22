@@ -6,13 +6,11 @@ import etl.sources.discogs.models.{Artist => DiscogsArtist}
 class ArtistParser(xmlPath: String)
     extends DiscogsParser[DiscogsArtist](xmlPath) {
 
-  /*********************** Xml Api ***********************/
   /**
     * Deserialize an xml artist node to an instance of
     * [[etl.sources.discogs.models.Artist]]
     *
-    * @param artist xml node. Assumed to be <artist>
-    * @return [[etl.sources.discogs.models.Artist]]
+    * @param xml node. Assumed to be <artist>
     */
   def deserialize(artist: Node): DiscogsArtist = {
     DiscogsArtist(
